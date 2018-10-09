@@ -79,18 +79,16 @@ but it should be easy to extend to extend the template to work on other regions.
 **Note**: Make sure Fargate is available in the regions you want to run this from.
 Here is a list of products by region: https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services.  
 
-The CloudFormation template will ask for a few basic parameters.  
+The CloudFormation template will ask for a few basic parameters and will create everything needed to run Fargate on AWS; 
+including a VPC, 3 public subnets in different AZs, a security group, an internet gateway, a route table, a CloudWatch
+group, a CloudWatch Log Filter, an IAM role for the tasks, an ECS cluster and the Task Definition for Fargate.  
 
 ![CloudFormation](docs/cloudformation.png)
 
 - **DockerImage**. Specify the docker image that you published to the DockerHub.
 - **DockerTaskCpu**. Number of CPU units to assign to the Fargate tasks ([Task Size Reference](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size)).
 - **DockerTaskMemory**. Memory in MB to assign to the Fargate tasks ([Task Size Reference](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size))
-- **FargateClusterName**. Name of your cluster so you can identiy it. 
-
-The CloudFormation template will create everything needed to run Fargate on AWS; including the VPC, subnets,
-security groups, internet gateway and route tables. 
- 
+- **FargateClusterName**. Name of your cluster so you can identify it in the ECS Console.  
 
 ### 5. Run the tests
 
@@ -99,9 +97,7 @@ you launched on the previous step. This python file will read the CloudFormation
 will schedule the execution of the Fargate tasks.
 
 Before running the python script, install boto3 by creating a virtual environment. Creating a virtual
-environment is optional, but recommended.
-
-If you don't have virtualenv installed, you can install it with pip. If you already have it, skip this step. 
+environment is optional, but recommended. If you don't have virtualenv installed, you can install it with pip. 
 
 ```bash
 pip install virtualenv
@@ -115,7 +111,7 @@ virtualenv env
 source env/bin/activate
 ``` 
 
-Once inside the virtual environment, install the dependencies (boto3) by running:
+Once inside the virtual environment, install boto3 by running:
 
 ```bash
 pip install -r requirements.txt
