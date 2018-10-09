@@ -1,13 +1,19 @@
 ## Distributed Load Testing Using Fargate
 
-Running performance load testing is extremely important to understand how your services will scale and behave once 
-deployed to production. However, organizations tend to skip this type of testing because it can be challenging and 
-time consuming to setup. One of the main challenges is how to simulate a scenario that mimics the load expected in 
-a production environment; In a real world scenario, requests from users typically come from different geographic 
-locations and are likely to come in parrallel. This repository is an example of how to setup a distributed load testing
-infrastructure using AWS Fargate and the tesing tool Taurus. 
+This solution walks you through a prescriptive implementation of Distributed Load Testing using 
+[Taurus (JMeter)](https://gettaurus.org) and [AWS Fargate](https://aws.amazon.com/fargate). You can use it to test your 
+web services (system under test) under high stress scenarios and understand it's behavior and scalability. 
 
 ![Architecture](docs/arch.png)
+
+Taurus acts as a wrapper around JMeter and allows you to generate HTTP requests in parallel simulating a 
+real-world scenario. This solution shows how to run Taurus on Docker containers and deploy them to Fargate clusters
+running in different AWS regions, so that you can simulate requests coming from different geographic locations into 
+your service. 
+
+**Note**: Your service (system under test) does not have to be running on AWS. You can configure this solution to hit
+any HTTP endpoint as long as it's accessible through the internet. However, this solution is meant to be deployed
+on an AWS account. 
 
 ## License Summary
 
