@@ -158,4 +158,3 @@ The Dashboard will look something like this:
 
 ![CloudWatch](docs/cloudwatch.jpg)
 
-
