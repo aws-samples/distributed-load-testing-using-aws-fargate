@@ -61,13 +61,13 @@ docker login
 Once logged in, you can build the image running docker build from the root folder of this project.  
 
 ```bash
-docker build -t {your_docker_hub_username}/dlt-fargate .
+docker build -t your_docker_hub_user/dlt-fargate .
 ```
 
-- Now you can push the image to the registry. 
+Now you can push the image to the registry
 
 ```bash
-docker push {your_docker_hub_username}/imageName
+docker push your_docker_hub_user/dlt-fargate
 ```
 
 ### 4. Create the Fargate Clusters
@@ -76,16 +76,16 @@ Create the Fargate clusters in your AWS account by running the CloudFormation te
 every region where you want to run tests from. This example works for `us-east-1`, `us-east-2` and `us-west-2`
 but it should be easy to extend to extend the template to work on other regions.
 
-**Note**: Make sure Fargate is available in the regions you want to run this from:
-https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services.  
+**Note**: Make sure Fargate is available in the regions you want to run this from.
+Here is a list of products by region: https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services.  
 
 The CloudFormation template will ask for a few basic parameters.  
 
 ![CloudFormation](docs/cloudformation.png)
 
 - **DockerImage**. Specify the docker image that you published to the DockerHub.
-- **DockerTaskCpu**. How much CPU do you want to assign to the Fargate tasks.
-- **DockerTaskMemory**. How much memory in MB do you want to assign to the Fargate tasks.
+- **DockerTaskCpu**. Number of CPU units to assign to the Fargate tasks ([Task Size Reference](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size)).
+- **DockerTaskMemory**. Memory in MB to assign to the Fargate tasks ([Task Size Reference](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size))
 - **FargateClusterName**. Name of your cluster so you can identiy it. 
 
 The CloudFormation template will create everything needed to run Fargate on AWS; including the VPC, subnets,
