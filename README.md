@@ -9,33 +9,29 @@ infrastructure using AWS Fargate and the tesing tool Taurus.
 
 ![Architecture](docs/arch.png)
 
-### License Summary
+## License Summary
 
 This sample code is made available under a modified MIT license. See the LICENSE file.
 
-### Requirements
+## Requirements
 
 - Python 2.7
 - Docker CLI
 - Access to an AWS account
+- A DockerHub account
 
-### Instructions
+## Getting Started
 
-- Build the docker image
-
-```bash
-docker build -t whatever/imageName .
-```
-
-- Push the image to a docker registry. For simplicity, the public DockerHub. 
+### 1. Clone this repository
 
 ```bash
-docker login
-docker push whatever/imageName
+git clone https://github.com/aws-samples/distributed-load-testing-using-aws-fargate.git
 ```
 
-- Configure your test scenario by editing the `tests/my-test.yml` file. 
-You can check more about the syntax of this file in the Taurus docs: https://gettaurus.org/kb/Index . 
+### 2. Modify the Taurus test scenario
+
+Configure your test scenario by editing the `tests/my-test.yml` file.  
+To can learn more about the syntax of this file, check the Taurus docs: https://gettaurus.org/kb/Index .
 
 ```yaml
 execution:
@@ -48,35 +44,89 @@ scenarios:
   aws-website-test:
     requests:
     - http://aws.amazon.com
+``` 
+
+### 3. Build and publish the docker image
+
+Once you have completed your test scenario. You need to package it in a Docker image and publish it
+in the Docker Hub or in a private registry of your choice.  
+
+For simplicity, I'm going to use the public Docker Hub. If you don't have an account, go ahead and create one in
+https://hub.docker.com. Then login from the terminal:  
+
+```bash
+docker login
 ```
 
-- Create the Fargate clusters by running the Cloud Formation template in `cloudformation/main.yml` on
+Once logged in, you can build the image running docker build from the root folder of this project.  
+
+```bash
+docker build -t {your_docker_hub_username}/dlt-fargate .
+```
+
+- Now you can push the image to the registry. 
+
+```bash
+docker push {your_docker_hub_username}/imageName
+```
+
+### 4. Create the Fargate Clusters
+
+Create the Fargate clusters in your AWS account by running the CloudFormation template in `cloudformation/main.yml` on
 every region where you want to run tests from. This example works for `us-east-1`, `us-east-2` and `us-west-2`
-but is fairly easy to extend for other regions. 
+but it should be easy to extend to extend the template to work on other regions.
 
-- Once you have created the CloudFormation stacks on every region. You need to edit the `bin/runner.py` python file
-to add the list of regions with its cloud formation stack names that you launched on each region. 
+**Note**: Make sure Fargate is available in the regions you want to run this from:
+https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services.  
 
-### Run the tests
+The CloudFormation template will ask for a few basic parameters.  
 
-Finally, to start running your tests. You need to run the `runner.py` python script.
-It's recommended to create a virtualenv to install the script dependencies. 
+![CloudFormation](docs/cloudformation.png)
+
+- **DockerImage**. Specify the docker image that you published to the DockerHub.
+- **DockerTaskCpu**. How much CPU do you want to assign to the Fargate tasks.
+- **DockerTaskMemory**. How much memory in MB do you want to assign to the Fargate tasks.
+- **FargateClusterName**. Name of your cluster so you can identiy it. 
+
+The CloudFormation template will create everything needed to run Fargate on AWS; including the VPC, subnets,
+security groups, internet gateway and route tables. 
  
+
+### 5. Run the tests
+
+Finally, edit the `bin/runner.py` python file to add the list of regions with its CloudFormation stack names that
+you launched on the previous step. This python file will read the CloudFormation outputs and based on those parameters
+will schedule the execution of the Fargate tasks.
+
+Before running the python script, install boto3 by creating a virtual environment. Creating a virtual
+environment is optional, but recommended.
+
+If you don't have virtualenv installed, you can install it with pip. If you already have it, skip this step. 
+
 ```bash
 pip install virtualenv
+``` 
+
+Create the virtual environment inside the `bin/` directory and activate it. 
+
+```bash
 cd bin/
 virtualenv env
 source env/bin/activate
-```
+``` 
 
-Then you can install the dependencies
+Once inside the virtual environment, install the dependencies (boto3) by running:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-And run the script
+And finally, when you are ready to run the Distributed Load Test, run the script.
 
 ```bash
 python runner.py
 ```
+
+### 6. Monitor the tests in CloudWatch
+
+Work in progress
