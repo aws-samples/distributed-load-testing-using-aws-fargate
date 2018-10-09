@@ -131,4 +131,31 @@ python runner.py
 
 ### 6. Monitor the tests in CloudWatch
 
-Work in progress
+The CloudFormation template should have created a [CloudWatch Metric Filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html)
+that will capture the average response time for each HTTP request that was issued to your system under test. You should
+see something like this in the template:
+
+```yaml
+TaurusLogFilterAvgResponseTime:
+  Type: AWS::Logs::MetricFilter
+  Properties:
+    FilterPattern: "[time, logType=INFO*, logTitle=Current*, numVu, vu, numSucc, succ, numFail, fail, avgRt, x]"
+    LogGroupName: !Ref FargateTaskCloudWatchLogGroup
+    MetricTransformations:
+      -
+        MetricValue: "$avgRt"
+        MetricNamespace: "dlt-fargate/taurus"
+        MetricName: "avgResponseTime"
+```
+
+What this filter is doing, is parsing the Taurus logs that match that given format and assigning a variable name to each
+value in the log. We are going to ignore all values in the log except for `avgRt` which is captured as a new metric and 
+stored in your CloudWatch Metrics. 
+
+Once the filter is in place, I recommend to centralize the metrics from the different regions into a single CloudWatch
+Dashboard. To pull metrics from different regions into one Dashboard [follow this steps](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cross_region_dashboard.html).
+The Dashboard will look something like this:   
+
+![CloudWatch](docs/cloudwatch.jpg)
+
+
