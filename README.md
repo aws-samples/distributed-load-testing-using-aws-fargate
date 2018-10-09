@@ -1,7 +1,7 @@
 ## Distributed Load Testing Using Fargate
 
 This solution walks you through a prescriptive implementation of Distributed Load Testing using 
-[Taurus (JMeter)](https://gettaurus.org) and [AWS Fargate](https://aws.amazon.com/fargate). You can use it to test your 
+[AWS Fargate](https://aws.amazon.com/fargate) and [Taurus (JMeter)](https://gettaurus.org). You can use it to test your 
 web services (system under test) under high stress scenarios and understand it's behavior and scalability. 
 
 ![Architecture](docs/arch.png)
