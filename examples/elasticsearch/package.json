@@ -1,0 +1,22 @@
+{
+  "name": "elasticsearch-test-suite",
+  "version": "1.0.0",
+  "description": "Example of load testing an Amazon Elasticsearch cluster",
+  "main": "index.test.js",
+  "dependencies": {
+    "aws-sdk": "^2.348.0",
+    "elasticsearch": "^15.2.0",
+    "http-aws-es": "^6.0.0",
+    "mocha": "^3.0.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "mocha index.test.js"
+  },
+  "author": "Fernando Dingler",
+  "license": "MIT-0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aws-samples/distributed-load-testing-using-aws-fargate"
+  }
+}

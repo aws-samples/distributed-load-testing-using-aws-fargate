@@ -12,5 +12,13 @@
 # HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
-included-configs:
-  - my-test.yml
+execution:
+- executor: mocha
+  hold-for: 1m
+  scenario:
+    script: index.test.js
+
+services:
+- module: shellexec
+  prepare:
+    - npm install

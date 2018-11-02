@@ -94,6 +94,8 @@ Outputs:
     Value: !Ref FargateTaskSecurityGroup
   TaskDefinitionArn:
     Value: !Ref FargateTaskDefinition
+  TaskIAMRole:
+    Value: !Ref FargateTaskExecutionRole
 
 Mappings:
   RegionMap:
