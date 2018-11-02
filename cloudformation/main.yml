@@ -44,6 +44,42 @@ Parameters:
       - 1024
       - 2048
       - 4096
+  VpcCidrBlock:
+    Type: String
+    Default: 192.168.0.0/16
+    Description: CIDR block of the new VPC where Fargate will be placed
+  SubnetACidrBlock:
+    Type: String
+    Default: 192.168.0.0/20
+    Description: CIDR block of subnet A
+  SubnetBCidrBlock:
+    Type: String
+    Default: 192.168.16.0/20
+    Description: CIDR block of subnet B
+  SubnetCCidrBlock:
+    Type: String
+    Default: 192.168.32.0/20
+    Description: CIDR block of subnet C
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      -
+        Label:
+          default: "Network Configuration"
+        Parameters:
+          - VpcCidrBlock
+          - SubnetACidrBlock
+          - SubnetBCidrBlock
+          - SubnetCCidrBlock
+      -
+        Label:
+          default: "Fargate and Docker Configuration"
+        Parameters:
+          - FargateClusterName
+          - DockerImage
+          - DockerTaskMemory
+          - DockerTaskCpu
 
 Outputs:
   SubnetA:
@@ -78,29 +114,32 @@ Resources:
   DLTVpc:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 172.31.0.0/16
+      CidrBlock: !Ref VpcCidrBlock
       InstanceTenancy: default
       EnableDnsSupport: true
       EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: dlt-fargate
 
   PublicSubnetA:
     Type: AWS::EC2::Subnet
     Properties:
-      CidrBlock: 172.31.0.0/20
+      CidrBlock: !Ref SubnetACidrBlock
       AvailabilityZone: !FindInMap [RegionMap, !Ref "AWS::Region", "az1"]
       VpcId: !Ref DLTVpc
 
   PublicSubnetB:
     Type: AWS::EC2::Subnet
     Properties:
-      CidrBlock: 172.31.32.0/20
+      CidrBlock: !Ref SubnetBCidrBlock
       AvailabilityZone: !FindInMap [RegionMap, !Ref "AWS::Region", "az2"]
       VpcId: !Ref DLTVpc
 
   PublicSubnetC:
     Type: AWS::EC2::Subnet
     Properties:
-      CidrBlock: 172.31.16.0/20
+      CidrBlock: !Ref SubnetCCidrBlock
       AvailabilityZone: !FindInMap [RegionMap, !Ref "AWS::Region", "az3"]
       VpcId: !Ref DLTVpc
 

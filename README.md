@@ -80,10 +80,15 @@ docker push your_docker_hub_user/dlt-fargate
 
 Create the Fargate clusters in your AWS account by running the CloudFormation template in `cloudformation/main.yml` on
 every region where you want to run tests from. This example works for `us-east-1`, `us-east-2` and `us-west-2`
-but it should be easy to extend to extend the template to work on other regions.
+but its easy to extend the template to work on other regions. 
 
 **Note**: Make sure Fargate is available in the regions you want to run this from.
-Here is a list of products by region: https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services.  
+Here is a list of products by region: https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services.
+
+**[Optional]** An alternative way of running this CloudFormation template on multiple regions is to use
+[CloudFormation StackSets](https://aws.amazon.com/blogs/aws/use-cloudformation-stacksets-to-provision-resources-across-multiple-aws-accounts-and-regions),
+which allow you to create resources on multiple accounts and regions at once. There is some IAM work that needs to be 
+done in your account to use StackSets, but it's worth the effort. 
 
 The CloudFormation template will ask for a few basic parameters and will create everything needed to run Fargate on AWS; 
 including a VPC, 3 public subnets in different AZs, a security group, an internet gateway, a route table, a CloudWatch
@@ -91,10 +96,14 @@ group, a CloudWatch Log Filter, an IAM role for the tasks, an ECS cluster and th
 
 ![CloudFormation](docs/cloudformation.png)
 
+- **VpcCidrBlock**. CIDR block of the VPC that will be created for the cluster to run on.
+- **SubnetACidrBlock**. CIDR block of Subnet A in the VPC.
+- **SubnetBCidrBlock**. CIDR block of Subnet B in the VPC.
+- **SubnetCCidrBlock**. CIDR block of Subnet C in the VPC.
 - **DockerImage**. Specify the docker image that you published to the DockerHub.
 - **DockerTaskCpu**. Number of CPU units to assign to the Fargate tasks ([Task Size Reference](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size)).
 - **DockerTaskMemory**. Memory in MB to assign to the Fargate tasks ([Task Size Reference](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size))
-- **FargateClusterName**. Name of your cluster so you can identify it in the ECS Console.  
+- **FargateClusterName**. Name of your cluster so you can identify it in the ECS Console.   
 
 ### 5. Run the tests
 
