@@ -2,7 +2,7 @@
   "name": "elasticsearch-test-suite",
   "version": "1.0.0",
   "description": "Example of load testing an Amazon Elasticsearch cluster",
-  "main": "index.test.js",
+  "main": "producer.test.js",
   "dependencies": {
     "aws-sdk": "^2.348.0",
     "chance": "^1.0.16",
@@ -12,7 +12,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "mocha index.test.js"
+    "test": "mocha producer.test.js"
   },
   "author": "Fernando Dingler",
   "license": "MIT-0",

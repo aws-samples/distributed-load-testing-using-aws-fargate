@@ -1,11 +1,11 @@
-// Copyright <YEAR> Amazon.com, Inc. or its affiliates. All Rights Reserved.
+// Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 // SPDX-License-Identifier: MIT-0
 const elasticsearch = require('elasticsearch');
 const awsElasticSearch = require('http-aws-es');
 const ChanceJs = require('chance');
 const chance = new ChanceJs();
 
-describe('Elasticsearch GameDay', () => {
+describe('Elasticsearch Document Producer', () => {
 
   const elasticSearchUrl = 'https://banana.us-west-2.es.amazonaws.com';
   const index = 'performance-testing';

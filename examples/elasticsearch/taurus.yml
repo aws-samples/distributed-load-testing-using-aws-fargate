@@ -16,7 +16,11 @@ execution:
 - executor: mocha
   hold-for: 1m
   scenario:
-    script: index.test.js
+    script: producer.test.js
+- executor: mocha
+  hold-for: 1m
+  scenario:
+    script: consumer.test.js
 
 services:
 - module: shellexec
