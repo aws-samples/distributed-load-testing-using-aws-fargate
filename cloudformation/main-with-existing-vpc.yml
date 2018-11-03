@@ -1,0 +1,165 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+AWSTemplateFormatVersion: 2010-09-09
+Description: Distributed load testing (DLT) using AWS Fargate
+
+Parameters:
+  FargateClusterName:
+    Type: String
+    Default: "dlt-fargate"
+  DockerImage:
+    Type: String
+  DockerTaskMemory:
+    Type: Number
+    Default: 2048
+    AllowedValues:
+    - 512
+    - 1024
+    - 2048
+    - 3072
+    - 4096
+    - 5120
+    - 6144
+    - 7168
+    - 8192
+    - 16384
+  DockerTaskCpu:
+    Type: Number
+    Default: 512
+    AllowedValues:
+    - 256
+    - 512
+    - 1024
+    - 2048
+    - 4096
+  Vpc:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC where the Fargate cluster will be placed
+  SubnetA:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet A of the VPC
+  SubnetB:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet B of the VPC
+  SubnetC:
+    Type: AWS::EC2::Subnet::Id
+    Description: Subnet C of the VPC
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+    -
+      Label:
+        default: "Network Configuration"
+      Parameters:
+      - Vpc
+      - SubnetA
+      - SubnetB
+      - SubnetC
+    -
+      Label:
+        default: "Fargate and Docker Configuration"
+      Parameters:
+      - FargateClusterName
+      - DockerImage
+      - DockerTaskMemory
+      - DockerTaskCpu
+
+Outputs:
+  SubnetA:
+    Value: !Ref SubnetA
+  SubnetB:
+    Value: !Ref SubnetB
+  SubnetC:
+    Value: !Ref SubnetC
+  FargateClusterName:
+    Value: !Ref FargateCluster
+  TaskSecurityGroup:
+    Value: !Ref FargateTaskSecurityGroup
+  TaskDefinitionArn:
+    Value: !Ref FargateTaskDefinition
+  TaskIAMRole:
+    Value: !Ref FargateTaskExecutionRole
+
+Resources:
+  FargateTaskSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: 'DLT Fargate tasks security group'
+      VpcId: !Ref Vpc
+      SecurityGroupEgress:
+        IpProtocol: '-1'
+        CidrIp: 0.0.0.0/0
+
+  FargateCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Ref FargateClusterName
+
+  FargateTaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        -
+          Effect: Allow
+          Action: "sts:AssumeRole"
+          Principal:
+            Service: "ecs-tasks.amazonaws.com"
+      ManagedPolicyArns:
+      - "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+
+  FargateTaskCloudWatchLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      RetentionInDays: 365
+
+  TaurusLogFilterAvgResponseTime:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      FilterPattern: "[time, logType=INFO*, logTitle=Current*, numVu, vu, numSucc, succ, numFail, fail, avgRt, x]"
+      LogGroupName: !Ref FargateTaskCloudWatchLogGroup
+      MetricTransformations:
+      -
+        MetricValue: "$avgRt"
+        MetricNamespace: "dlt-fargate/taurus"
+        MetricName: "avgResponseTime"
+
+  FargateTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Cpu: !Ref DockerTaskCpu
+      ExecutionRoleArn: !GetAtt FargateTaskExecutionRole.Arn
+      Family: 'dlt-fargate-task'
+      Memory: !Ref DockerTaskMemory
+      NetworkMode: awsvpc
+      RequiresCompatibilities:
+      - FARGATE
+      TaskRoleArn: !GetAtt FargateTaskExecutionRole.Arn
+      ContainerDefinitions:
+      -
+        Name: "dlt-fargate-task"
+        Essential: true
+        Image: !Ref DockerImage
+        Memory: !Ref DockerTaskMemory
+        LogConfiguration:
+          LogDriver: awslogs
+          Options:
+            awslogs-group: !Ref FargateTaskCloudWatchLogGroup
+            awslogs-region: !Ref "AWS::Region"
+            awslogs-stream-prefix: "dlt-fargate"
+        Command:
+        - "taurus.yml"
