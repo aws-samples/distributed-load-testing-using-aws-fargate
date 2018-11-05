@@ -1,4 +1,4 @@
-### Load Testing an Amazon Elasticsearch Cluster
+## Load Testing an Amazon Elasticsearch Cluster
 
 This example assumes that your Elasticsearch cluster is behind a VPC and not exposed publicly to the internet. However, 
 either way is possible to test. Having it publicly accessible makes it even easier. 
@@ -9,7 +9,7 @@ To start, follow all the instructions
 in the main [README](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/blob/master/README.md), 
 except for **Step 2 and 4** in which you need to do the following changes instead.
 
-#### Instead of Step 2
+### Instead of Step 2
 Open the [Dockerfile](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/blob/master/Dockerfile) 
 in the root directory of the project and uncomment the elasticsearch instruction and comment out the http one. It should
 look like this: 
@@ -32,7 +32,7 @@ documents to be indexed in the cluster, while the consumer will issue *search* r
 If you look at the `taurus.yml` file, you can see both scenarios specified, which means that Taurus will execute both 
 scripts in parallel.
 
-#### Instead of Step 4
+### Instead of Step 4
 
 In the case of your Elasticsearch cluster running behind a VPC, the easiest option would be run the Fargate Docker tasks 
 in the same VPC. So, follow **Step 4** just as described in the main [README](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/blob/master/README.md) 
