@@ -21,7 +21,7 @@ describe('Elasticsearch Document Consumer', () => {
   it('searches documents based on random text', () => {
     return elasticsearch.client.search({
       index: elasticsearch.index,
-      q: chance.word(),
+      q: 'description:'.concat(chance.word()),
     });
   });
 });
