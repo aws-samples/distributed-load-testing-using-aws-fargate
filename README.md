@@ -1,8 +1,8 @@
 ## Distributed Load Testing Using Fargate
 
 This solution walks you through a prescriptive implementation of Distributed Load Testing using 
-[AWS Fargate](https://aws.amazon.com/fargate) and [Taurus (JMeter)](https://gettaurus.org). You can use it to test your 
-web services (system under test) under high stress scenarios and understand it's behavior and scalability. 
+[AWS Fargate](https://aws.amazon.com/fargate) and [Taurus](https://gettaurus.org). You can use it to test your 
+services under high stress scenarios and understand it's behavior and scalability. 
 
 ![Architecture](docs/arch.png)
 
@@ -25,6 +25,14 @@ This sample code is made available under a modified MIT license. See the LICENSE
 - Docker CLI
 - Access to an AWS account
 - A DockerHub account
+
+## Examples
+
+- [Load testing a basic HTTP endpoint](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/tree/master/examples/http)
+- [Load testing an Elasticsearch cluster behind a VPC](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/tree/master/examples/elasticsearch)
+- [Coming next] Simulating IoT devices for load testing.
+- [Coming next] Simulating Kinesis Streams producers. 
+
 
 ## Getting Started
 
