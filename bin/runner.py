@@ -77,6 +77,7 @@ def start_distributed_load_test():
             overrides={
                 'containerOverrides': [
                     {
+                        'name': 'dlt-fargate-task',
                         'environment': [
                             {
                                 'name': 'ENDPOINT_UNDER_TEST',

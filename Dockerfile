@@ -1,2 +1,2 @@
 FROM blazemeter/taurus
-ADD examples/elasticsearch /bzt-configs/
+ADD examples/http /bzt-configs/

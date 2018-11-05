@@ -14,11 +14,11 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 execution:
 - executor: mocha
-  hold-for: 1m
+  hold-for: 10m
   scenario:
     script: producer.test.js
 - executor: mocha
-  hold-for: 1m
+  hold-for: 10m
   scenario:
     script: consumer.test.js
 
