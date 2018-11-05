@@ -36,7 +36,7 @@ scripts in parallel.
 
 In the case of your Elasticsearch cluster running behind a VPC, the easiest option would be run the Fargate Docker tasks 
 in the same VPC. So, follow **Step 4** just as described in the main [README](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/blob/master/README.md) 
-but use the CloudFormation template located in `cloudformation/main-with-existing-vpc.yml`. This template will let you
+but use this CloudFormation template instead: [main-with-existing-vpc.yml](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/blob/master/cloudformation/main-with-existing-vpc.yml). This template will let you
 choose the VPC and Subnets to place the Fargate cluster. 
 
 For this same reason, run the CloudFormation template in 1 region only and make sure to edit the `bin/runner.py` script
