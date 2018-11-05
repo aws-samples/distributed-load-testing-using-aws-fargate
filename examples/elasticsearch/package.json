@@ -12,7 +12,7 @@
   },
   "devDependencies": {},
   "scripts": {
-    "test": "mocha producer.test.js"
+    "test": "mocha ."
   },
   "author": "Fernando Dingler",
   "license": "MIT-0",

@@ -13,15 +13,16 @@
  * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-const elasticsearch = require('./es-client');
-const ChanceJs = require('chance');
-const chance = new ChanceJs();
+const elasticsearch = require('elasticsearch');
+const awsElasticSearch = require('http-aws-es');
 
-describe('Elasticsearch Document Consumer', () => {
-  it('searches documents based on random text', () => {
-    return elasticsearch.client.search({
-      index: elasticsearch.index,
-      q: chance.word(),
-    });
-  });
+const elasticSearchUrl = process.env.ENDPOINT_UNDER_TEST;
+const index = 'performance-testing';
+const client = new elasticsearch.Client({
+  hosts: [elasticSearchUrl],
+  connectionClass: awsElasticSearch,
+  apiVersion: "6.3",
 });
+
+module.exports.index = index;
+module.exports.client = client;

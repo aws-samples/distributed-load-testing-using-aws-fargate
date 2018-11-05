@@ -16,6 +16,10 @@ import boto3
 import uuid
 
 
+# Will be passed as environment variable to the Fargate docker containers.
+# Useful with the Elasticsearch example as the test suite will read the cluster URL from this variable.
+ENDPOINT_UNDER_TEST = 'http://strawberry.banana.com'
+
 # List of regions where we have deployed the CloudFormation stack
 regions = [
     {
@@ -70,6 +74,18 @@ def start_distributed_load_test():
             startedBy=run_id,
             group=run_id,
             launchType='FARGATE',
+            overrides={
+                'containerOverrides': [
+                    {
+                        'environment': [
+                            {
+                                'name': 'ENDPOINT_UNDER_TEST',
+                                'value': ENDPOINT_UNDER_TEST
+                            },
+                        ],
+                    },
+                ]
+            },
             networkConfiguration={
                 'awsvpcConfiguration': {
                     'assignPublicIp': 'ENABLED',
