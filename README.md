@@ -44,7 +44,7 @@ git clone https://github.com/aws-samples/distributed-load-testing-using-aws-farg
 
 ### 2. Modify the Taurus test scenario
 
-Configure your test scenario by editing the `tests/my-test.yml` file.  
+Configure your test scenario by editing the `examples/http/taurus.yml` file.  
 To can learn more about the syntax of this file, check the Taurus docs: https://gettaurus.org/kb/Index .
 
 ```yaml
