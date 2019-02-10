@@ -1,0 +1,51 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Master Template of Distributed Load Test Using AWS Fargate.
+  It deploys an ECR Repository, an ECS Fargate Cluster, a VPC,
+  CloudWatch Logs group for the Fargate tasks and associated
+  IAM roles.
+
+Parameters:
+  DockerRegistry:
+    Type: String
+    Description: >
+      ECR Registry created in the master CloudFormation template. It should be in the form of
+      account_id.dkr.ecr.region.amazonaws.com/repository_name
+  TaskExecutionRoleArn:
+    Type: String
+    Description: >
+      IAM Execution Role ARN for the Fargate tasks, it should have been created by the master
+      CloudFormation template and available in the Outputs section.
+
+Resources:
+  Vpc:
+    Type: AWS::CloudFormation::Stack
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/fargate-vpc.yaml"
+
+  FargateCluster:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: Vpc
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/fargate-cluster.yaml"
+      Parameters:
+        VpcId: !GetAtt Vpc.Outputs.VpcId
+        TaskExecutionRoleArn: !Ref TaskExecutionRoleArn
+        DockerImage: !Join
+          - ''
+          - - !Ref DockerRegistry
+            - ':latest'

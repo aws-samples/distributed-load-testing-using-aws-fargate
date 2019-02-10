@@ -1,0 +1,136 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Distributed Load Testing using AWS Fargate.
+  Dedicated VPC where the ECS Fargate tasks will be placed
+
+Parameters:
+  VpcCidrBlock:
+    Type: String
+    Default: 192.168.0.0/16
+    Description: CIDR block of the new VPC where Fargate will be placed
+  SubnetACidrBlock:
+    Type: String
+    Default: 192.168.0.0/20
+    Description: CIDR block of subnet A
+  SubnetBCidrBlock:
+    Type: String
+    Default: 192.168.16.0/20
+    Description: CIDR block of subnet B
+  SubnetCCidrBlock:
+    Type: String
+    Default: 192.168.32.0/20
+    Description: CIDR block of subnet C
+
+Mappings:
+  RegionMap:
+    us-east-1:
+      az1: us-east-1a
+      az2: us-east-1b
+      az3: us-east-1c
+    us-east-2:
+      az1: us-east-2a
+      az2: us-east-2b
+      az3: us-east-2c
+    us-west-2:
+      az1: us-west-2a
+      az2: us-west-2b
+      az3: us-west-2c
+
+Resources:
+  DLTVpc:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: !Ref VpcCidrBlock
+      InstanceTenancy: default
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+      Tags:
+        - Key: Name
+          Value: dlt-fargate
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref SubnetACidrBlock
+      AvailabilityZone: !FindInMap [RegionMap, !Ref "AWS::Region", "az1"]
+      VpcId: !Ref DLTVpc
+
+  PublicSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref SubnetBCidrBlock
+      AvailabilityZone: !FindInMap [RegionMap, !Ref "AWS::Region", "az2"]
+      VpcId: !Ref DLTVpc
+
+  PublicSubnetC:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: !Ref SubnetCCidrBlock
+      AvailabilityZone: !FindInMap [RegionMap, !Ref "AWS::Region", "az3"]
+      VpcId: !Ref DLTVpc
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties: {}
+
+  MainRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref DLTVpc
+
+  GatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref DLTVpc
+      InternetGatewayId: !Ref InternetGateway
+
+  RouteToInternet:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayAttachment
+    Properties:
+      DestinationCidrBlock: 0.0.0.0/0
+      RouteTableId: !Ref MainRouteTable
+      GatewayId: !Ref InternetGateway
+
+  RouteTableAssociationA:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref MainRouteTable
+      SubnetId: !Ref PublicSubnetA
+
+  RouteTableAssociationB:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref MainRouteTable
+      SubnetId: !Ref PublicSubnetB
+
+  RouteTableAssociationC:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref MainRouteTable
+      SubnetId: !Ref PublicSubnetC
+
+
+Outputs:
+  VpcId:
+    Value: !Ref DLTVpc
+  SubnetA:
+    Value: !Ref PublicSubnetA
+  SubnetB:
+    Value: !Ref PublicSubnetB
+  SubnetC:
+    Value: !Ref PublicSubnetC

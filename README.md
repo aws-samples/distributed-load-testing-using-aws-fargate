@@ -78,6 +78,12 @@ Once logged in, you can build the image running docker build from the root folde
 docker build -t your_docker_hub_user/dlt-fargate .
 ```
 
+Test your docker container locally to verify it runs correctly:
+
+```bash
+docker run -it dlt-fargate taurus.yml
+```
+
 Now you can push the image to the registry
 
 ```bash
