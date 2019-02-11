@@ -21,31 +21,56 @@ This sample code is made available under a modified MIT license. See the LICENSE
 
 ## Requirements
 
-- Python 2.7
-- Docker CLI
+- Python 2.7+
+- Docker
 - Access to an AWS account
-- A DockerHub account
+- [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 
 ## Examples
 
 - [Load testing a basic HTTP endpoint](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/tree/master/examples/http)
-- [Load testing an Elasticsearch cluster behind a VPC](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/tree/master/examples/elasticsearch)
-- [Coming next] Simulating IoT devices for load testing.
-- [Coming next] Simulating Kinesis Streams producers. 
+- [Load testing an Elasticsearch cluster behind a VPC](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate/tree/master/examples/elasticsearch) 
 
 
 ## Getting Started
 
-### 1. Clone this repository
+### 1. Launch Solution
+
+In this step you will launch the `Master` CloudFormation stack that will create a Fargate Cluster, an ECR Docker registry, an IAM
+Execution Role, a Task Definition, a CloudWatch Log Group, a Security Group and a new VPC with Public Subnets. 
+
+Region Name | Region Code | Launch
+------|-----|-----
+US East (N. Virginia) | us-east-1 | [![Launch in us-east-1](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/master.yaml)
+US East (Ohio) | us-east-2 | [![Launch in us-east-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/master.yaml)
+US West (Oregon) | us-west-2 | [![Launch in us-west-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/master.yaml)
+
+You will notice that the CloudFormation stack will expand itself into 2 additional nested stacks: The master stack takes
+care of creating global resources like an ECR Registry and the IAM Execution Role. One nested stack takes care of 
+creating the network (VPC) and the other creates the Fargate cluster. 
+
+Once the three stacks have completed deployment, you need to make a note of the Output values in the master stack 
+(see the following Screenshot) as you will need these values later. Go to the Outputs section of the 
+master stack and save the DockerRegistryName and DockerRegistryURL values somewhere in your notes.
+
+![CloudFormation Screenshot](docs/cfn-outputs.png)
+
+### 2. Clone this repository
 
 ```bash
 git clone https://github.com/aws-samples/distributed-load-testing-using-aws-fargate.git
 ```
 
-### 2. Modify the Taurus test scenario
+Switch to the latest release so you have an stable code base. 
+
+```bash
+git checkout tags/v0.2-beta
+```
+
+### 3. Modify the load test scenario
 
 Configure your test scenario by editing the `examples/http/taurus.yml` file.  
-To can learn more about the syntax of this file, check the Taurus docs: https://gettaurus.org/kb/Index .
+To learn more about the syntax of this file, check the Taurus docs: https://gettaurus.org/kb/Index .
 
 ```yaml
 execution:
@@ -60,66 +85,43 @@ scenarios:
     - http://aws.amazon.com
 ``` 
 
-### 3. Build and publish the docker image
+### 4. Build and push the docker image
 
-Once you have completed your test scenario. You need to package it in a Docker image and publish it
-in the Docker Hub or in a private registry of your choice.  
-
-For simplicity, I'm going to use the public Docker Hub. If you don't have an account, go ahead and create one in
-https://hub.docker.com. Then login from the terminal:  
+Once you have completed your test scenario, you need to package it in a Docker image and push it to your ECR Docker registry.
+To do this, you first need to authenticate against ECR. The following command assumes you have the [AWS CLI installed and configured](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html). 
 
 ```bash
-docker login
+$(aws ecr get-login --no-include-email --region us-west-2)
 ```
 
-Once logged in, you can build the image running docker build from the root folder of this project.  
+Then, build the Docker image by running the following command from the root directory of this project. Replace 
+_{DockerRegistryName}_ with the Output value you saved in Step 1.   
 
 ```bash
-docker build -t your_docker_hub_user/dlt-fargate .
+docker build -t {DockerRegistryName} .
 ```
 
-Test your docker container locally to verify it runs correctly:
+Tag the image as `:latest`, you can choose another tag name, but for simplicity I'm doing _latest_. 
 
 ```bash
-docker run -it dlt-fargate taurus.yml
+docker tag {DockerRegistryName}:latest {DockerRegistryURL}:latest
 ```
 
-Now you can push the image to the registry
+Test your docker container locally to verify it runs correctly.
 
 ```bash
-docker push your_docker_hub_user/dlt-fargate
+docker run -it {DockerRegistryName} taurus.yml
 ```
 
-### 4. Create the Fargate Clusters
+If the docker container ran as expected, you can proceed to push the image to the registry. Unfortunately the Docker
+image for Taurus is quite heavy (~900 MB), so make sure you have good internet connectivity as this push can take a 
+little while. 
 
-Create the Fargate clusters in your AWS account by running the CloudFormation template in `cloudformation/main.yml` on
-every region where you want to run tests from. This example works for `us-east-1`, `us-east-2` and `us-west-2`
-but its easy to extend the template to work on other regions. 
+```bash
+docker push {DockerRegistryURL}:latest
+```
 
-**Note**: Make sure Fargate is available in the regions you want to run this from.
-Here is a list of products by region: https://aws.amazon.com/about-aws/global-infrastructure/regional-product-services.
-
-**[Optional]** An alternative way of running this CloudFormation template on multiple regions is to use
-[CloudFormation StackSets](https://aws.amazon.com/blogs/aws/use-cloudformation-stacksets-to-provision-resources-across-multiple-aws-accounts-and-regions),
-which allow you to create resources on multiple accounts and regions at once. There is some IAM work that needs to be 
-done in your account to use StackSets, but it's worth the effort. 
-
-The CloudFormation template will ask for a few basic parameters and will create everything needed to run Fargate on AWS; 
-including a VPC, 3 public subnets in different AZs, a security group, an internet gateway, a route table, a CloudWatch
-group, a CloudWatch Log Filter, an IAM role for the tasks, an ECS cluster and the Task Definition for Fargate.  
-
-![CloudFormation](docs/cloudformation.png)
-
-- **VpcCidrBlock**. CIDR block of the VPC that will be created for the cluster to run on.
-- **SubnetACidrBlock**. CIDR block of Subnet A in the VPC.
-- **SubnetBCidrBlock**. CIDR block of Subnet B in the VPC.
-- **SubnetCCidrBlock**. CIDR block of Subnet C in the VPC.
-- **DockerImage**. Specify the docker image that you published to the DockerHub.
-- **DockerTaskCpu**. Number of CPU units to assign to the Fargate tasks ([Task Size Reference](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size)).
-- **DockerTaskMemory**. Memory in MB to assign to the Fargate tasks ([Task Size Reference](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/task_definition_parameters.html#task_size))
-- **FargateClusterName**. Name of your cluster so you can identify it in the ECS Console.   
-
-### 5. Run the tests
+### 4. Run the tests in Fargate
 
 Finally, edit the `bin/runner.py` python file to add the list of regions with its CloudFormation stack names that
 you launched on the previous step. This python file will read the CloudFormation outputs and based on those parameters
@@ -152,7 +154,7 @@ And finally, when you are ready to run the Distributed Load Test, run the script
 python runner.py
 ```
 
-### 6. Monitor the tests in CloudWatch
+### 5. Monitor the test execution in CloudWatch
 
 The CloudFormation template should have created a [CloudWatch Metric Filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html)
 that will capture the average response time for each HTTP request that was issued to your system under test. You should
@@ -181,3 +183,19 @@ The Dashboard will look something like this:
 
 ![CloudWatch](docs/cloudwatch.jpg)
 
+## Launch in Additional Regions (Optional)
+
+It may be likely that running this solution from a single AWS region is enough to load test your application. However, 
+if you want to take it a step further, you can do so by deploying Fargate clusters in multiple regions and make this a 
+real distributed load test simulation. For this, I have created a separate CloudFormation template for you to launch the 
+solution in additional regions. The difference between this template and the Master one, is that this one doesn't
+create the ECR Docker Registry and the IAM Execution Role, as you can share these resources across all Fargate deployments. 
+
+Use the following buttons to launch the solution in the desired additional regions:  
+
+Additional Region | Region Code | Launch
+------|-----|-----
+US East (N. Virginia) | us-east-1 | [![Launch in us-east-1](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/additional-region.yaml)
+US East (Ohio) | us-east-2 | [![Launch in us-east-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/additional-region.yaml)
+US West (Oregon) | us-west-2 | [![Launch in us-west-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/additional-region.yaml)
+   

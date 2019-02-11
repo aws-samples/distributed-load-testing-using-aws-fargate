@@ -27,26 +27,9 @@ Parameters:
   DockerTaskMemory:
     Type: Number
     Default: 2048
-    AllowedValues:
-      - 512
-      - 1024
-      - 2048
-      - 3072
-      - 4096
-      - 5120
-      - 6144
-      - 7168
-      - 8192
-      - 16384
   DockerTaskCpu:
     Type: Number
     Default: 512
-    AllowedValues:
-      - 256
-      - 512
-      - 1024
-      - 2048
-      - 4096
 
 Resources:
   Cluster:

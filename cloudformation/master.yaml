@@ -59,9 +59,9 @@ Resources:
             - ':latest'
 
 Outputs:
-  TaskExecutionRoleArn:
-    Value: !GetAtt TaskExecutionRole.Arn
-  DockerRegistry:
+  DockerRegistryName:
+    Value: !Ref DockerRegistry
+  DockerRegistryURL:
     Value: !Join
       - ''
       - - !Ref 'AWS::AccountId'
