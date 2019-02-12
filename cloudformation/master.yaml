@@ -14,10 +14,9 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 AWSTemplateFormatVersion: 2010-09-09
 Description: >
-  Master Template of Distributed Load Test Using AWS Fargate.
-  It deploys an ECR Repository, an ECS Fargate Cluster, a VPC,
-  CloudWatch Logs group for the Fargate tasks and associated
-  IAM roles.
+  Master Template for Distributed Load Test Using AWS Fargate.
+  It deploys an ECR Repository, a Fargate Cluster, a VPC,
+  a CloudWatch Log Group and an IAM Execution Role.
 
 Resources:
   DockerRegistry:
@@ -69,3 +68,5 @@ Outputs:
         - !Ref 'AWS::Region'
         - '.amazonaws.com/'
         - !Ref DockerRegistry
+  TaskExecutionRoleArn:
+    Value: !GetAtt TaskExecutionRole.Arn
