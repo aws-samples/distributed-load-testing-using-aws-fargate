@@ -22,16 +22,16 @@ ENDPOINT_UNDER_TEST = 'http://strawberry.banana.com'
 
 # List of regions where we have deployed the CloudFormation stack
 regions = [
-    {
-      'name': 'us-east-1',
-      'stackName': 'dlt-fargate',
-      'taskCount': 3
-    },
-    {
-      'name': 'us-east-2',
-      'stackName': 'dlt-fargate',
-      'taskCount': 3
-    },
+    #{
+    #  'name': 'us-east-1',
+    #  'stackName': 'dlt-fargate',
+    #  'taskCount': 3
+    #},
+    #{
+    #  'name': 'us-east-2',
+    #  'stackName': 'dlt-fargate',
+    #  'taskCount': 3
+    #},
     {
       'name': 'us-west-2',
       'stackName': 'dlt-fargate',

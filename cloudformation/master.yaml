@@ -18,6 +18,11 @@ Description: >
   It deploys an ECR Repository, a Fargate Cluster, a VPC,
   a CloudWatch Log Group and an IAM Execution Role.
 
+Parameters:
+  GitRepositoryName:
+    Type: String
+    Default: "distributed-load-testing-using-aws-fargate"
+
 Resources:
   DockerRegistry:
     Type: AWS::ECR::Repository
@@ -57,7 +62,25 @@ Resources:
             - !Ref DockerRegistry
             - ':latest'
 
+  Pipeline:
+    Type: AWS::CloudFormation::Stack
+    DependsOn: Vpc
+    Properties:
+      TemplateURL: "https://s3.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/pipeline.yaml"
+      Parameters:
+        DockerRegistryArn: !GetAtt DockerRegistry.Arn
+        GitRepositoryName: !Ref GitRepositoryName
+        DockerRegistryURL: !Join
+          - ''
+          - - !Ref 'AWS::AccountId'
+            - '.dkr.ecr.'
+            - !Ref 'AWS::Region'
+            - '.amazonaws.com/'
+            - !Ref DockerRegistry
+
 Outputs:
+  GitRepoHttpUrl:
+    Value: !GetAtt Pipeline.Outputs.GitRepoHttpUrl
   DockerRegistryName:
     Value: !Ref DockerRegistry
   DockerRegistryURL:
@@ -70,3 +93,17 @@ Outputs:
         - !Ref DockerRegistry
   TaskExecutionRoleArn:
     Value: !GetAtt TaskExecutionRole.Arn
+  FargateClusterName:
+    Value: !GetAtt FargateCluster.Outputs.FargateClusterName
+  TaskSecurityGroup:
+    Value: !GetAtt FargateCluster.Outputs.TaskSecurityGroup
+  TaskDefinitionArn:
+    Value: !GetAtt FargateCluster.Outputs.TaskDefinitionArn
+  VpcId:
+    Value: !GetAtt Vpc.Outputs.VpcId
+  SubnetA:
+    Value: !GetAtt Vpc.Outputs.SubnetA
+  SubnetB:
+    Value: !GetAtt Vpc.Outputs.SubnetB
+  SubnetC:
+    Value: !GetAtt Vpc.Outputs.SubnetC

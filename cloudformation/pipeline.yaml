@@ -1,0 +1,250 @@
+# Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this
+# software and associated documentation files (the "Software"), to deal in the Software
+# without restriction, including without limitation the rights to use, copy, modify,
+# merge, publish, distribute, sublicense, and/or sell copies of the Software, and to
+# permit persons to whom the Software is furnished to do so.
+#
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+# INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+# PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+# HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+# OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+# SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+AWSTemplateFormatVersion: 2010-09-09
+Description: >
+  Deployment pipeline for Distributed Load Test Using AWS Fargate.
+  It creates a CodeBuild project used to configure and run a load test.
+
+Parameters:
+  GitRepositoryName:
+    Type: String
+  DockerRegistryURL:
+    Type: String
+  DockerRegistryArn:
+    Type: String
+  ContainersPerRegion:
+    Type: Number
+    Default: 3
+
+Resources:
+  CodeRepository:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryDescription: "Distributed load testing using AWS Fargate"
+      RepositoryName: !Ref GitRepositoryName
+
+  ArtifactStoreBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      VersioningConfiguration:
+        Status: Enabled
+
+  CodeBuild:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Description: Builds distributed load testing suite
+      TimeoutInMinutes: 20
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_MEDIUM
+        Image: "aws/codebuild/docker:18.09.0"
+        EnvironmentVariables:
+          -
+            Name: DOCKER_REGISTRY_URL
+            Value: !Ref DockerRegistryURL
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+            version: 0.2
+            phases:
+              pre_build:
+                commands:
+                  - echo $DOCKER_REGISTRY_URL
+                  - echo $CODEBUILD_RESOLVED_SOURCE_VERSION
+                  - aws --version
+                  - $(aws ecr get-login --region ${AWS::Region} --no-include-email)
+              build:
+                commands:
+                  - docker build -t $DOCKER_REGISTRY_URL:latest .
+                  - docker tag $DOCKER_REGISTRY_URL:latest $DOCKER_REGISTRY_URL:$CODEBUILD_RESOLVED_SOURCE_VERSION
+              post_build:
+                commands:
+                  - docker push $DOCKER_REGISTRY_URL:latest
+                  - docker push $DOCKER_REGISTRY_URL:$CODEBUILD_RESOLVED_SOURCE_VERSION
+
+  # Leverage CodeBuild to kick start the test suite.
+  # It could very well be replaced with a Lambda function
+  LoadTestRunner:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Description: Runs the load tests in Fargate
+      TimeoutInMinutes: 240 # 2 hours
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: LINUX_CONTAINER
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: "aws/codebuild/python:3.6.5"
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            build:
+              commands:
+                - cd bin
+                - python runner.py
+
+  CodePipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt CodePipelineRole.Arn
+      ArtifactStore:
+        Type: S3
+        Location: !Ref ArtifactStoreBucket
+      Stages:
+        -
+          Name: Source
+          Actions:
+            -
+              Name: Source
+              ActionTypeId:
+                Category: Source
+                Provider: CodeCommit
+                Owner: AWS
+                Version: 1
+              OutputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                RepositoryName: !GetAtt CodeRepository.Name
+                BranchName: 'master'
+
+        -
+          Name: Build
+          Actions:
+            -
+              Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceOutput
+              OutputArtifacts:
+                - Name: BuildOutput
+              Configuration:
+                ProjectName:
+                  Ref: CodeBuild
+
+        -
+          Name: LoadTest
+          Actions:
+            - Name: Runner
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              InputArtifacts:
+                - Name: SourceOutput
+              Configuration:
+                ProjectName:
+                  Ref: LoadTestRunner
+
+  # Shared IAM policy for CodePipeline and CodeBuild projects for simplicity.
+  # We could be more strict and create a separate role for each build
+  # project and another one for the pipeline.
+  BuildAndPipelinePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: "distributed-load-testing-using-aws-fargate"
+      Roles:
+        - !Ref CodeBuildRole
+        - !Ref CodePipelineRole
+      PolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Resource:
+              - !GetAtt ArtifactStoreBucket.Arn
+              - !Join
+                - ''
+                - - !GetAtt ArtifactStoreBucket.Arn
+                  - '/*'
+            Action:
+              - "s3:*"
+          - Effect: Allow
+            Resource: !GetAtt CodeRepository.Arn
+            Action:
+              - "codecommit:GetBranch"
+              - "codecommit:GetCommit"
+              - "codecommit:UploadArchive"
+              - "codecommit:GetUploadArchiveStatus"
+              - "codecommit:CancelUploadArchive"
+          - Effect: Allow
+            Resource: !Ref DockerRegistryArn
+            Action:
+              - "ecr:DescribeImages"
+              - "ecr:PutImage"
+              - "ecr:UploadLayerPart"
+              - "ecr:CompleteLayerUpload"
+              - "ecr:InitiateLayerUpload"
+              - "ecr:GetDownloadUrlForLayer"
+              - "ecr:ListImages"
+              - "ecr:BatchCheckLayerAvailability"
+              - "ecr:GetRepositoryPolicy"
+          - Effect: Allow
+            Resource: "*"
+            Action:
+              - "codebuild:StartBuild"
+              - "codebuild:StopBuild"
+              - "codebuild:BatchGetBuilds"
+              - "logs:CreateLogStream"
+              - "logs:CreateLogGroup"
+              - "logs:PutLogEvents"
+              - "ecr:GetAuthorizationToken"
+              - "cloudformation:DescribeStacks"
+              - "ecs:RunTask"
+              - "iam:PassRole"
+
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+
+  CodePipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+
+Outputs:
+  GitRepoHttpUrl:
+    Value: !GetAtt CodeRepository.CloneUrlHttp
+  GitRepoSshUrl:
+    Value: !GetAtt CodeRepository.CloneUrlSsh

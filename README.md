@@ -23,7 +23,7 @@ This sample code is made available under a modified MIT license. See the LICENSE
 
 - Python 2.7+
 - Docker
-- Access to an AWS account
+- An AWS account
 - [AWS CLI](https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html)
 
 ## Examples
