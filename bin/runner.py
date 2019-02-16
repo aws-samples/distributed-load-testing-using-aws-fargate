@@ -14,37 +14,40 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 import boto3
 import uuid
+import os
 
 
 # Will be passed as environment variable to the Fargate docker containers.
 # Useful with the Elasticsearch example as the test suite will read the cluster URL from this variable.
 ENDPOINT_UNDER_TEST = 'http://strawberry.banana.com'
+TASK_COUNT = int(os.getenv('TASK_COUNT', 3))
 
-# List of regions where we have deployed the CloudFormation stack
-regions = [
-    #{
-    #  'name': 'us-east-1',
-    #  'stackName': 'dlt-fargate',
-    #  'taskCount': 3
-    #},
-    #{
-    #  'name': 'us-east-2',
-    #  'stackName': 'dlt-fargate',
-    #  'taskCount': 3
-    #},
-    {
-      'name': 'us-west-2',
-      'stackName': 'dlt-fargate',
-      'taskCount': 3
-    }
-]
+def get_regions_from_environment_variables():
+    regions = []
+    region_count = 1
+    next_region = os.environ.get('REGION_' + str(region_count))
+    while next_region:
+        regions.append({
+            'name': next_region,
+            'stackName': os.environ.get('REGION_' + str(region_count) + '_STACK_NAME')
+        })
+        region_count += 1
+        next_region = os.environ.get('REGION_' + str(region_count))
+
+    return regions
 
 
 def start_distributed_load_test():
     run_id = str(uuid.uuid4())
     print('Started new load test with runId = {}'.format(run_id))
 
+    print('Getting list of regions from environment variables')
+    regions = get_regions_from_environment_variables()
+
     for region in regions:
+
+        if not region['stackName']:
+            continue
 
         cloud_formation = boto3.client('cloudformation', region_name=region['name'])
         ecs = boto3.client('ecs', region_name=region['name'])
@@ -70,7 +73,7 @@ def start_distributed_load_test():
         response = ecs.run_task(
             cluster=stack_outputs['FargateClusterName'],
             taskDefinition=stack_outputs['TaskDefinitionArn'],
-            count=region['taskCount'],
+            count=TASK_COUNT,
             startedBy=run_id,
             group=run_id,
             launchType='FARGATE',

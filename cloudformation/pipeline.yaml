@@ -27,6 +27,8 @@ Parameters:
   ContainersPerRegion:
     Type: Number
     Default: 3
+  MasterStackId:
+    Type: String
 
 Resources:
   CodeRepository:
@@ -41,6 +43,8 @@ Resources:
       VersioningConfiguration:
         Status: Enabled
 
+  # Builds, tags and pushes the docker image
+  # into the ECR Registry.
   CodeBuild:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -77,13 +81,13 @@ Resources:
                   - docker push $DOCKER_REGISTRY_URL:latest
                   - docker push $DOCKER_REGISTRY_URL:$CODEBUILD_RESOLVED_SOURCE_VERSION
 
-  # Leverage CodeBuild to kick start the test suite.
-  # It could very well be replaced with a Lambda function
+  # CodeBuild project that runs the runner.py python script
+  # to start the load tests. The script will schedule the
+  # execution of Fargate tasks into the different regions.
   LoadTestRunner:
     Type: AWS::CodeBuild::Project
     Properties:
       Description: Runs the load tests in Fargate
-      TimeoutInMinutes: 240 # 2 hours
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -91,6 +95,16 @@ Resources:
         Type: LINUX_CONTAINER
         ComputeType: BUILD_GENERAL1_SMALL
         Image: "aws/codebuild/python:3.6.5"
+      EnvironmentVariables:
+        -
+          Name: TASK_COUNT
+          Value: !Ref ContainersPerRegion
+        -
+          Name: REGION_1
+          Value: !Ref AWS::Region
+        -
+          Name: REGION_1_STACK_NAME
+          Value: !Ref MasterStackId
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
