@@ -47,6 +47,7 @@ Resources:
   # into the ECR Registry.
   CodeBuild:
     Type: AWS::CodeBuild::Project
+    DependsOn: BuildAndPipelinePolicy
     Properties:
       Description: Builds distributed load testing suite
       TimeoutInMinutes: 20
@@ -86,6 +87,7 @@ Resources:
   # execution of Fargate tasks into the different regions.
   LoadTestRunner:
     Type: AWS::CodeBuild::Project
+    DependsOn: BuildAndPipelinePolicy
     Properties:
       Description: Runs the load tests in Fargate
       ServiceRole: !GetAtt CodeBuildRole.Arn
@@ -117,6 +119,7 @@ Resources:
 
   CodePipeline:
     Type: AWS::CodePipeline::Pipeline
+    DependsOn: BuildAndPipelinePolicy
     Properties:
       RoleArn: !GetAtt CodePipelineRole.Arn
       ArtifactStore:
