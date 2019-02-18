@@ -18,15 +18,11 @@ Description: >
   It deploys a Fargate Cluster, a VPC and a CloudWatch Log group.
 
 Parameters:
-  DockerRegistryName:
-    Type: String
-    Description: >
-      Name of the ECR repository created in the master CloudFormation template.
   DockerRegistryURL:
     Type: String
     Description: >
       URL of the ECR repository created in the master CloudFormation template. It should be in the form of
-      account_id.dkr.ecr.region.amazonaws.com
+      account_id.dkr.ecr.region.amazonaws.com/registry_name
   TaskExecutionRoleArn:
     Type: String
     Description: >
@@ -50,6 +46,4 @@ Resources:
         DockerImage: !Join
           - ''
           - - !Ref DockerRegistryURL
-            - '/'
-            - !Ref DockerRegistryName
             - ':latest'
