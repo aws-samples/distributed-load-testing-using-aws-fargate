@@ -1,6 +1,6 @@
 ## Distributed Load Testing Using Fargate
 
-This solution walks you through a prescriptive implementation of Distributed Load Testing using 
+This project launches a solution that runs Distributed Load Tests using 
 [AWS Fargate](https://aws.amazon.com/fargate) and [Taurus](https://gettaurus.org). You can use it to test your 
 services under high stress scenarios and understand it's behavior and scalability. 
 
@@ -28,21 +28,21 @@ This sample code is made available under a modified MIT license. See the LICENSE
 
 ### 1. Launch Solution
 
-In this step you will launch the `Master` CloudFormation stack that will create a Fargate Cluster, an ECR Docker registry, an IAM
+In this step you will launch the `master` CloudFormation stack that will create a Fargate Cluster, an ECR Docker registry, an IAM
 Execution Role, a Task Definition, a CloudWatch Log Group, a Security Group, a new VPC, a CodeCommit repository, a CodePipeline 
 and 2 CodeBuild projects with their associated IAM Roles. 
 
 Region Name | Region Code | Launch
 ------|-----|-----
-US East (N. Virginia) | us-east-1 | [![Launch in us-east-1](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/master.yaml)
-US East (Ohio) | us-east-2 | [![Launch in us-east-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/master.yaml)
-US West (Oregon) | us-west-2 | [![Launch in us-west-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/master.yaml)
+US East (N. Virginia) | us-east-1 | [![Launch in us-east-1](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/master.yaml)
+US East (Ohio) | us-east-2 | [![Launch in us-east-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/master.yaml)
+US West (Oregon) | us-west-2 | [![Launch in us-west-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/master.yaml)
 
-After launching it, notice that the CloudFormation stack expands itself into 3 additional nested stacks: The master stack, 
-which takes care of creating resources that will be shared across regions like the ECR Registry and the CodePipeline; 
-The VPC nested stack, which creates the network configuration and subnets; The Fargate nested stack which creates the cluster
-and task definition and the Pipeline nested stack that creates the CodeCommit repository and the CodeBuild projects to 
-build and run the load tests in Fargate.
+You will notice that the CloudFormation `master` stack expands itself into 4 stacks: The master one, which takes care of 
+creating resources that will be shared across regions like the ECR Registry and the CodePipeline; The VPC nested stack, 
+which creates the network configuration and subnets; The Fargate nested stack which creates the cluster and task definition 
+and the Pipeline nested stack that creates the CodeCommit repository and the CodeBuild projects to build and run the 
+load tests in Fargate.
 
 ### 2. Clone this repository
 
@@ -50,16 +50,10 @@ build and run the load tests in Fargate.
 git clone https://github.com/aws-samples/distributed-load-testing-using-aws-fargate.git
 ```
 
-Switch to the latest release so you have a stable code base.
-
-```bash
-git checkout tags/v1.0-beta
-```
-
 ### 3. Modify the load test scenario
 
-Configure your test scenario by editing the `examples/http/taurus.yml` file.  
-To learn more about the syntax of this file, check the Taurus docs: https://gettaurus.org/kb/Index .
+Configure your test scenario by editing the `examples/http/taurus.yml` file. The default example shown below runs a load test 
+for 5 minutes with 5 concurrent requests per second against https://aws.amazon.com with a ramp-up time of 1 minute. 
 
 ```yaml
 execution:
@@ -71,15 +65,17 @@ execution:
 scenarios:
   aws-website-test:
     requests:
-    - http://aws.amazon.com
+    - https://aws.amazon.com
 ```
+
+To learn more about the syntax of this file, check the Taurus docs: https://gettaurus.org/kb/Index.
 
 ### 4. Push to CodeCommit
 
-One of the resources that got created when deploying this solution is a CodeCommit repository to store this project along
-with your load test scenarios. It also created a CodePipeline connected to this repository, such that when you push a 
-new commit the pipeline will be triggered automatically, build your load test scenarios into a Docker image, push the
-image to the ECR registry and then run the tests into the Fargate cluster; all of this automatically!
+One of the resources that gets created when deploying this solution is a CodeCommit repository that stores your
+your load test scenarios. A CodePipeline was also created and connected to the CodeCommit repository, such that when you 
+push a new commit the pipeline will be triggered automatically, build your load test scenarios into a Docker image, push 
+the image to the ECR registry and then run the tests into the Fargate cluster; all of this automatically!
 
 First, remove the current Git origin of the project because you just cloned it from Github.     
 
@@ -93,8 +89,8 @@ Now, set the origin to be your new CodeCommit repository.
 git remote add origin {code_commit_repository_url}
 ```
 
-Finally, push the project to the repository. Note that after you push this, the deployment pipeline will be triggered
-automatically and therefore the load tests will be run on the Fargate cluster.
+Finally, push the code. Note that after you push this, the deployment pipeline will be triggered automatically 
+and therefore running the load tests scenarios in the Fargate cluster(s).
 
 ```bash
 git push -u origin master
@@ -141,9 +137,9 @@ Use the following buttons to launch the solution in the desired additional regio
 
 Additional Region | Region Code | Launch
 ------|-----|-----
-US East (N. Virginia) | us-east-1 | [![Launch in us-east-1](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/additional-region.yaml)
-US East (Ohio) | us-east-2 | [![Launch in us-east-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/additional-region.yaml)
-US West (Oregon) | us-west-2 | [![Launch in us-west-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=WildRydes-Cloud9&templateURL=https://s3-us-west-2.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/additional-region.yaml)
+US East (N. Virginia) | us-east-1 | [![Launch in us-east-1](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/additional-region.yaml)
+US East (Ohio) | us-east-2 | [![Launch in us-east-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/additional-region.yaml)
+US West (Oregon) | us-west-2 | [![Launch in us-west-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/additional-region.yaml)
    
 
 ## Run Locally
