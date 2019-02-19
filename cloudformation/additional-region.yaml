@@ -33,13 +33,13 @@ Resources:
   Vpc:
     Type: AWS::CloudFormation::Stack
     Properties:
-      TemplateURL: "https://s3.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/fargate-vpc.yaml"
+      TemplateURL: "https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/fargate-vpc.yaml"
 
   FargateCluster:
     Type: AWS::CloudFormation::Stack
     DependsOn: Vpc
     Properties:
-      TemplateURL: "https://s3.amazonaws.com/load-testing-using-aws-fargate/artifacts/templates/fargate-cluster.yaml"
+      TemplateURL: "https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/fargate-cluster.yaml"
       Parameters:
         VpcId: !GetAtt Vpc.Outputs.VpcId
         TaskExecutionRoleArn: !Ref TaskExecutionRoleArn
