@@ -26,7 +26,7 @@ This sample code is made available under a modified MIT license. See the LICENSE
 
 ## Getting Started
 
-### 1. Launch Solution
+### Step 1. Launch Solution
 
 In this step you will launch the `master` CloudFormation stack that will create a Fargate Cluster, an ECR Docker registry, an IAM
 Execution Role, a Task Definition, a CloudWatch Log Group, a Security Group, a new VPC, a CodeCommit repository, a CodePipeline 
@@ -44,13 +44,13 @@ which creates the network configuration and subnets; The Fargate nested stack wh
 and the Pipeline nested stack that creates the CodeCommit repository and the CodeBuild projects to build and run the 
 load tests in Fargate.
 
-### 2. Clone this repository
+### Step 2. Clone this repository
 
 ```bash
 git clone https://github.com/aws-samples/distributed-load-testing-using-aws-fargate.git
 ```
 
-### 3. Modify the load test scenario
+### Step 3. Modify the load test scenario
 
 Configure your test scenario by editing the `examples/http/taurus.yml` file. The default example shown below runs a load test 
 for 5 minutes with 5 concurrent requests per second against https://aws.amazon.com with a ramp-up time of 1 minute. 
@@ -70,7 +70,7 @@ scenarios:
 
 To learn more about the syntax of this file, check the Taurus docs: https://gettaurus.org/kb/Index.
 
-### 4. Push to CodeCommit
+### Step 4. Push to CodeCommit
 
 One of the resources that gets created when deploying this solution is a CodeCommit repository and a CodePipeline connected 
 to it. On every commit the pipeline will run automatically, build the load test scenarios into a Docker image and push 
@@ -105,7 +105,7 @@ run the tests in the Fargate cluster. The pipeline should look like this:
 
 ![Pipeline](docs/pipeline.png)
 
-### 5. Monitor the test execution
+### Step 5. Monitor the test execution
 
 When the last step of the pipeline has finished successfully, it means that your load tests are now running on Fargate.
 Go to the ECS Console to find your Fargate cluster, click on it and you should see 3 tasks running: 
