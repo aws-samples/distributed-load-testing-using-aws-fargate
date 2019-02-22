@@ -27,6 +27,11 @@ Resources:
   DockerRegistry:
     Type: AWS::ECR::Repository
 
+  CloudWatchDashboard:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardBody: !Sub '{"widgets":[{"type":"metric","x":0,"y":0,"width":8,"height":8,"properties":{"metrics":[["dlt-fargate/taurus","avgResponseTime"]],"view":"timeSeries","stacked":true,"region":"${AWS::Region}","stat":"Average"}}]}'
+
   TaskExecutionRole:
     Type: AWS::IAM::Role
     Properties:

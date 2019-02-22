@@ -57,7 +57,7 @@ Resources:
       MetricTransformations:
         -
           MetricValue: "$avgRt"
-          MetricNamespace: "dlt-fargate/``````taurus``````"
+          MetricNamespace: "dlt-fargate/taurus"
           MetricName: "avgResponseTime"
 
   FargateTaskDefinition:
