@@ -125,7 +125,7 @@ will display the metrics captured by the filter described above and display it i
 
 ![Dashboard](docs/dashboard.png)
 
-## Launch in Additional Regions (Optional)
+## Launch Additional Regions (Optional)
 
 It may be likely that running this solution from a single AWS region is enough to load test your service. However, 
 if you want to take it a step further, you can deploy Fargate clusters in multiple regions and make it a 
@@ -141,10 +141,16 @@ US East (N. Virginia) | us-east-1 | [![Launch in us-east-1](https://camo.githubu
 US East (Ohio) | us-east-2 | [![Launch in us-east-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/additional-region.yaml)
 US West (Oregon) | us-west-2 | [![Launch in us-west-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/additional-region.yaml)
 
-Once the stack creation has been completed, go back to the region where you launched the `Master` stack and follow these
-steps:
+This stack will ask for 2 parameters: The `DockerRegistryURL` and `TaskExecutionRoleArn`. You can find the values for those
+parameters in the `Outputs` section of the `Master` CloudFormation stack launched in **Step 1**. 
 
-![AddRegion](docs/add-region.gif)
+![MasterOutputs](docs/master-outputs.png)
+
+![AdditionalRegionParams](docs/add-region-params.png)    
+
+Finally, Once the stack has been completed, you need to tell CodePipeline that a new region has been configured so that
+it also launches the Load Tests scenarios in this region. To do this, go back to the region where you launched the `Master`
+stack and follow these steps:
 
 1. Go to CodePipeline, then select the pipeline created by the master stack
 2. Click on the `LoadTest` step to edit it.
@@ -157,7 +163,11 @@ Name                 | Value
 REGION_2             | Additional region (i.e. us-east-1)
 REGION_2_STACK_NAME  | CloudFormation stack name (i.e. DistributedLoadTesting)
 
-Save the changes and you are done! You can repeat those steps for every additional region. 
+*Gif to help demonstrate the steps mentioned above: 
+
+![AddRegion](docs/add-region.gif)
+
+Save the changes, run the pipeline and you are done! Repeat those steps for every additional region. 
 
 ### Monitor All Regions
 
