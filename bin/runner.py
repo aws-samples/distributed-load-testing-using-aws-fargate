@@ -19,7 +19,7 @@ import os
 
 # Will be passed as environment variable to the Fargate docker containers.
 # Useful with the Elasticsearch example as the test suite will read the cluster URL from this variable.
-ENDPOINT_UNDER_TEST = 'http://strawberry.banana.com'
+ENDPOINT_UNDER_TEST = os.getenv('ENDPOINT_UNDER_TEST', 'http://strawberry.banana.com')
 TASK_COUNT = int(os.getenv('TASK_COUNT', 3))
 
 def get_regions_from_environment_variables():

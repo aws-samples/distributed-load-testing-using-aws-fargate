@@ -89,9 +89,8 @@ Now, set the origin to be your new CodeCommit repository.
 git remote add origin {code_commit_repository_url}
 ```
 
-Finally, push the code. Note that after you push this, the deployment pipeline will be triggered automatically 
-and therefore running the load tests scenarios in the Fargate cluster(s).
-
+Finally, push the code. This will trigger the Code Pipeline which will run the tests in the Fargate cluster. 
+    
 ```bash
 git push -u origin master
 ```
@@ -99,21 +98,7 @@ git push -u origin master
 ### 5. Monitor the test execution in CloudWatch
 
 The CloudFormation template should have created a [CloudWatch Metric Filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html)
-that will capture the average response time for each HTTP request that was issued to your system under test. You should
-see something like this in the template:
-
-```yaml
-TaurusLogFilterAvgResponseTime:
-  Type: AWS::Logs::MetricFilter
-  Properties:
-    FilterPattern: "[time, logType=INFO*, logTitle=Current*, numVu, vu, numSucc, succ, numFail, fail, avgRt, x]"
-    LogGroupName: !Ref FargateTaskCloudWatchLogGroup
-    MetricTransformations:
-      -
-        MetricValue: "$avgRt"
-        MetricNamespace: "dlt-fargate/taurus"
-        MetricName: "avgResponseTime"
-```
+that will capture the average response time for each HTTP request that was issued to your system under test. 
 
 What this filter is doing, is parsing the Taurus logs that match that given format and assigning a variable name to each
 value in the log. We are going to ignore all values in the log except for `avgRt` which is captured as a new metric and 
@@ -127,34 +112,52 @@ The Dashboard will look something like this:
 
 ## Launch in Additional Regions (Optional)
 
-It may be likely that running this solution from a single AWS region is enough to load test your application. However, 
-if you want to take it a step further, you can do so by deploying Fargate clusters in multiple regions and make this a 
-real distributed load test simulation. For this, I have created a separate CloudFormation template for you to launch the 
-solution in additional regions. The difference between this template and the Master one, is that this one doesn't
-create the ECR Docker Registry and the IAM Execution Role, as you can share these resources across all Fargate deployments. 
+It may be likely that running this solution from a single AWS region is enough to load test your service. However, 
+if you want to take it a step further, you can deploy Fargate clusters in multiple regions and make it a 
+multi-region load test simulation. In order to do this, I created a separate CloudFormation template that launches this 
+solution in additional regions. The difference between this template and the Master one is that this one does not
+create the ECR Docker Registry, the CodePipeline and IAM Roles, as those resources will be shared across all your regions. 
 
-Use the following buttons to launch the solution in the desired additional regions:  
+Use the following links to launch the solution in the desired additional regions:
 
 Additional Region | Region Code | Launch
 ------|-----|-----
 US East (N. Virginia) | us-east-1 | [![Launch in us-east-1](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-1#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/additional-region.yaml)
 US East (Ohio) | us-east-2 | [![Launch in us-east-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-east-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/additional-region.yaml)
 US West (Oregon) | us-west-2 | [![Launch in us-west-2](https://camo.githubusercontent.com/210bb3bfeebe0dd2b4db57ef83837273e1a51891/68747470733a2f2f73332e616d617a6f6e6177732e636f6d2f636c6f7564666f726d6174696f6e2d6578616d706c65732f636c6f7564666f726d6174696f6e2d6c61756e63682d737461636b2e706e67)](https://console.aws.amazon.com/cloudformation/home?region=us-west-2#/stacks/new?stackName=DistributedLoadTesting&templateURL=https://s3.amazonaws.com/distributed-load-testing-using-aws-fargate/templates/additional-region.yaml)
-   
 
-## Run Locally
+Once the stack creation has been completed, go back to the region where you launched the `Master` stack and follow these
+steps:
 
-Build the image by issuing the following command in the root directory of this project.
+![AddRegion](docs/add-region.gif)
+
+1. Go to CodePipeline, then select the pipeline created by the master stack
+2. Click on the `LoadTest` step to edit it.
+3. Go to Edit > Environment
+4. Expand the `Additional Configuration` section
+5. Add 2 new environment variables to have your additional region added.
+
+Name                 | Value
+---------------------|---------------------
+REGION_2             | Additional region (i.e. us-east-1)
+REGION_2_STACK_NAME  | CloudFormation stack name of the additional region (i.e. DistributedLoadTesting)
+
+Save the changes and you are done! You can repeat those steps for every additional region. 
+
+## How to Run Locally
+
+It's a good practice to run your tests locally before pushing them to CodeCommit to make sure they run correctly in a
+Docker container. To do this, build the image by issuing the following command in the root directory of this project.
 
 ```bash
 docker build -t load-tests-using-fargate .
 ```
 
-Then run the docker container locally.
+Then run the container locally.
 
 ```bash
 docker run -it load-tests-using-fargate taurus.yml
 ```
 
-If the docker ran as expected, you can push the changes to your AWS CodeCommit repository and let the pipeline 
+If you are happy with the result, you can push the changes to the CodeCommit repository and let the pipeline 
 do the rest.
