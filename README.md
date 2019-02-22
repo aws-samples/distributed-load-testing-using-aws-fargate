@@ -72,43 +72,58 @@ To learn more about the syntax of this file, check the Taurus docs: https://gett
 
 ### 4. Push to CodeCommit
 
-One of the resources that gets created when deploying this solution is a CodeCommit repository that stores your
-your load test scenarios. A CodePipeline was also created and connected to the CodeCommit repository, such that when you 
-push a new commit the pipeline will be triggered automatically, build your load test scenarios into a Docker image, push 
-the image to the ECR registry and then run the tests into the Fargate cluster; all of this automatically!
-
-First, remove the current Git origin of the project because you just cloned it from Github.     
+One of the resources that gets created when deploying this solution is a CodeCommit repository and a CodePipeline connected 
+to it. On every commit the pipeline will run automatically, build the load test scenarios into a Docker image and push 
+the image to the ECR registry and finally run the load tests into the Fargate clusters. 
+ 
+Now, remove the current Git origin of the project because you just cloned it from Github and you want your remote origin
+to be the CodeCommit repository instead.   
 
 ```bash
 git remote rm origin
 ```
 
-Now, set the origin to be your new CodeCommit repository.
+Now, set the origin to be your new CodeCommit repository. An easy way to find the repository URL is in the `Outputs` section
+of the CloudFormation stack you launched on Step 1. [See the following screenshot](docs/cfn-outputs.png). The URL
+should look something like this: `https://git-codecommit.us-west-2.amazonaws.com/v1/repos/distributed-load-testing-using-aws-fargate`.
 
 ```bash
 git remote add origin {code_commit_repository_url}
 ```
 
-Finally, push the code. This will trigger the Code Pipeline which will run the tests in the Fargate cluster. 
+Finally, push the code. 
     
 ```bash
 git push -u origin master
 ```
 
-### 5. Monitor the test execution in CloudWatch
+**Note** If you get a permission denied error when pushing, you may not have configured CodeCommit credentials. Follow this
+steps to get your authentication setup: [Git Credentials for AWS CodeCommit](https://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-gc.html).
 
-The CloudFormation template should have created a [CloudWatch Metric Filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html)
-that will capture the average response time for each HTTP request that was issued to your system under test. 
+If the push was successful, go to CodePipeline and check how the build progresses all the way to the last step, which will
+run the tests in the Fargate cluster. The pipeline should look like this:  
 
-What this filter is doing, is parsing the Taurus logs that match that given format and assigning a variable name to each
-value in the log. We are going to ignore all values in the log except for `avgRt` which is captured as a new metric and 
-stored in your CloudWatch Metrics. 
+![Pipeline](docs/pipeline.png)
 
-Once the filter is in place, I recommend to centralize the metrics from the different regions into a single CloudWatch
-Dashboard. To pull metrics from different regions into one Dashboard [follow this steps](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cross_region_dashboard.html).
-The Dashboard will look something like this:   
+### 5. Monitor the test execution
 
-![CloudWatch](docs/cloudwatch.jpg)
+When the last step of the pipeline has finished successfully, it means that your load tests are now running on Fargate.
+Go to the ECS Console to find your Fargate cluster, click on it and you should see 3 tasks running: 
+
+![FargateTasks](docs/fargate.png) 
+
+Finally, this solution also created a [CloudWatch Metric Filter](https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html)
+that will capture the average response times for each HTTP request that is issued to your system under test by the
+Docker tasks running on Fargate.  
+
+What this filter is doing, is parsing the Taurus logs and assigning a variable name to each value in the log. It ignores 
+all values in the log except for `avgRt` which is captured as a new metric and stored in your CloudWatch Metrics. To learn
+more about how this metric filter was created, check the CloudFormation template `cloudformation/fargate-cluster.yaml`.
+
+Go to CloudWatch and you should see a Dashboard that was created automatically for you under the Dashboards section. It
+will display the metrics captured by the filter described above and display it in a nice graph: 
+
+![Dashboard](docs/dashboard.png)
 
 ## Launch in Additional Regions (Optional)
 
@@ -140,9 +155,18 @@ steps:
 Name                 | Value
 ---------------------|---------------------
 REGION_2             | Additional region (i.e. us-east-1)
-REGION_2_STACK_NAME  | CloudFormation stack name of the additional region (i.e. DistributedLoadTesting)
+REGION_2_STACK_NAME  | CloudFormation stack name (i.e. DistributedLoadTesting)
 
 Save the changes and you are done! You can repeat those steps for every additional region. 
+
+### Monitor All Regions
+
+When you launch this solution in multiple regions, I recommend you centralize the monitoring into the same CloudWatch
+Dashboard for easier visibility. In order to do this, you need to pull metrics from different regions into the Dashboard 
+by [follow this steps](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cross_region_dashboard.html). Once 
+configured, the multi-region Dashboard will look something like this:   
+
+![CloudWatch](docs/cloudwatch.jpg)
 
 ## How to Run Locally
 

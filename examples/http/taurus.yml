@@ -21,4 +21,4 @@ execution:
 scenarios:
   aws-website-test:
     requests:
-    - http://aws.amazon.com
+    - https://aws.amazon.com
