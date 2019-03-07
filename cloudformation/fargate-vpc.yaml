@@ -49,6 +49,10 @@ Mappings:
       az1: us-west-2a
       az2: us-west-2b
       az3: us-west-2c
+    eu-west-1:
+      az1: eu-west-1a
+      az2: eu-west-1b
+      az3: eu-west-1c
 
 Resources:
   DLTVpc:
