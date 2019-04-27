@@ -13,12 +13,12 @@
 # OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 execution:
-- concurrency: 10
-  ramp-up: 1m
-  hold-for: 5m
-  scenario: awsdingler-k8s
+  - concurrency: 10
+    ramp-up: 5m
+    hold-for: 25m
+    scenario: aws-website-test
 
 scenarios:
   aws-website-test:
     requests:
-    - https://api.awsdingler.com/v1/k8s/hello
+      - https://aws.amazon.com
