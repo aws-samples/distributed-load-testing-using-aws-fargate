@@ -38,23 +38,26 @@ def get_regions_from_environment_variables():
 
 
 def start_distributed_load_test():
-    if int(TASK_COUNT)>50:
-        print('AWS LIMIT OF 50 TASKS AT ONE TIME EXCEEDED. TASK_COUNT MUST BE LESS THAN 50')
-        exit(0)
     run_id = str(uuid.uuid4())
     print('Started new load test with runId = {}'.format(run_id))
 
     print('Getting list of regions from environment variables')
     regions = get_regions_from_environment_variables()
+    totalTasks = int(TASK_COUNT)
+    if int(totalTasks * len(regions)) > 50:
+        print('Too many tasks - lower number of task per region')
+        exit(0)
+
 
     for region in regions:
+
         if not region['stackName']:
             continue
-
-        lastPass = int(TASK_COUNT % 10)
-        totalPasses = int(TASK_COUNT / 10) 
+       
+        lastPass = int(totalTasks % 10)
+        totalPasses = int(totalTasks / 10) 
         
-        if  lastPass > 0 and TASK_COUNT != 0:
+        if  lastPass > 0:
             totalPasses = int(totalPasses + 1)
        
         if  totalPasses > 1:
@@ -65,7 +68,7 @@ def start_distributed_load_test():
         
         while totalPasses > 0:
             cloud_formation = boto3.client('cloudformation', region_name=region['name'])
-            ecs = boto3.client('ecs', region_name=region['name']) #boto3 client needs to be initiated in each batch
+            ecs = boto3.client('ecs', region_name=region['name'])
 
             print('Describing CloudFormation stack {} in region {}'.format(region['stackName'], region['name']))
             stacks = cloud_formation.describe_stacks(
@@ -132,7 +135,7 @@ def start_distributed_load_test():
 
             for task in response['tasks']:
                 print('Task scheduled {}', task['taskArn'])    
-            totalPasses = currentPass   
+            totalPasses = currentPass - 1   
 
 
 if __name__ == '__main__':
