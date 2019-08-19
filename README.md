@@ -1,4 +1,4 @@
-## Distributed Load Testing Using Fargate
+## Distributed Load Testing Using Fargate [![](https://img.shields.io/badge/CFN-deploy-green.svg?style=flat-square&logo=amazon)](#getting-started)  [![](https://img.shields.io/github/stars/aws-samples/distributed-load-testing-using-aws-fargate.svg?logo=github&style=flat-square)](https://github.com/aws-samples/distributed-load-testing-using-aws-fargate)
 
 This project launches a solution that runs Distributed Load Tests using 
 [AWS Fargate](https://aws.amazon.com/fargate) and [Taurus](https://gettaurus.org). You can use it to test your 
