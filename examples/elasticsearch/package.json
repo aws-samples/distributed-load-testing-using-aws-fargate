@@ -8,7 +8,7 @@
     "chance": "^1.0.16",
     "elasticsearch": "^15.2.0",
     "http-aws-es": "^6.0.0",
-    "mocha": "^5.2.0"
+    "mocha": "^6.0.0"
   },
   "devDependencies": {},
   "scripts": {
