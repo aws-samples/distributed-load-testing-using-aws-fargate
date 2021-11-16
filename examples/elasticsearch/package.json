@@ -4,7 +4,7 @@
   "description": "Example of load testing an Amazon Elasticsearch cluster",
   "main": "producer.test.js",
   "dependencies": {
-    "aws-sdk": "^2.348.0",
+    "aws-sdk": "^2.814.0",
     "chance": "^1.0.16",
     "elasticsearch": "^15.2.0",
     "http-aws-es": "^6.0.0",
